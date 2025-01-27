@@ -3,8 +3,7 @@ import requests
 from dotenv import load_dotenv
 from urllib.parse import urlparse
 
-load_dotenv()
-TOKEN = os.environ['TOKEN']
+
 API_VERSION = '5.199'
 
 
@@ -17,13 +16,14 @@ def shorten_link(token, url):
         headers=headers,
         params=params)
     response.raise_for_status()
-    if 'error' in response.json():
-        if response.json()['error']['error_code'] == 100:
+    response_json = response.json()
+    if 'error' in response_json:
+        if response_json['error']['error_code'] == 100:
             raise ValueError
         else:
             raise Exception
 
-    short_link = response.json()['response']['short_url']
+    short_link = response_json['response']['short_url']
     return short_link
 
 
@@ -38,49 +38,51 @@ def count_clicks(token, url):
         headers=headers,
         params=params)
     response.raise_for_status()
-    if 'error' in response.json():
-        if response.json()['error']['error_code'] == 100:
+    response_json = response.json()
+    if 'error' in response_json:
+        if response_json['error']['error_code'] == 100:
             raise ValueError
         else:
             raise Exception
 
-    if len(response.json()['response']['stats']) > 0:
-        clicks_count = response.json()['response']['stats'][0]['views']
+    if len(response_json['response']['stats']) > 0:
+        clicks_count = response_json['response']['stats'][0]['views']
     return clicks_count
 
 
-def is_short_link(url):
-    if urlparse(url).netloc == 'vk.cc':
-        return True
-    return False
+def is_short_link(token, url):
+    headers = {'Authorization': f'Bearer {token}'}
+    key = urlparse(url).path[1:]
+    params = {'v': API_VERSION, 'key': key}
+
+    response = requests.get(
+        'https://api.vk.ru/method/utils.getLinkStats',
+        headers=headers,
+        params=params)
+    response.raise_for_status()
+    if 'error' in response.json():
+        return False
+    return True
 
 
 def main():
+    load_dotenv()
+    token = os.environ['VK_TOKEN']
     user_link = input('Введите ссылку: ')
 
-    # If the user link is shortened show number of clicks
-    if is_short_link(user_link):
+    if is_short_link(token=token, url=user_link):
         try:
-            clicks_count = count_clicks(token=TOKEN,
+            clicks_count = count_clicks(token=token,
                                         url=user_link)
             print('Количество переходов по ссылке за день:', clicks_count)
         except ValueError:
             print('Вы ввели неверную ссылку!')
-        except Exception:
-            print('Не удалось получить количество переходов по ссылке')
-        finally:
-            return
-
-    # If the user link is not shortened return short link
-    try:
-        short_link = shorten_link(token=TOKEN, url=user_link)
-        print('Сокращенная ссылка:', short_link)
-    except ValueError:
-        print('Вы ввели неверную ссылку!')
-    except Exception:
-        print('Не удалось получить короткую ссылку')
-    finally:
-        return
+    else:
+        try:
+            short_link = shorten_link(token=token, url=user_link)
+            print('Сокращенная ссылка:', short_link)
+        except ValueError:
+            print('Вы ввели неверную ссылку!')
 
 
 if __name__ == '__main__':
