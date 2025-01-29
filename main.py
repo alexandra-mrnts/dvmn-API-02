@@ -16,14 +16,14 @@ def shorten_link(token, url):
         headers=headers,
         params=params)
     response.raise_for_status()
-    response_dict = response.json()
-    if 'error' in response_dict:
-        if response_dict['error']['error_code'] == 100:
+    response_body = response.json()
+    if 'error' in response_body:
+        if response_body['error']['error_code'] == 100:
             raise ValueError
         else:
             raise Exception
 
-    short_link = response_dict['response']['short_url']
+    short_link = response_body['response']['short_url']
     return short_link
 
 
@@ -38,15 +38,15 @@ def count_clicks(token, url):
         headers=headers,
         params=params)
     response.raise_for_status()
-    response_dict = response.json()
-    if 'error' in response_dict:
-        if response_dict['error']['error_code'] == 100:
+    response_body = response.json()
+    if 'error' in response_body:
+        if response_body['error']['error_code'] == 100:
             raise ValueError
         else:
             raise Exception
 
-    if response_dict['response']['stats']:
-        clicks_count = response_dict['response']['stats'][0]['views']
+    if response_body['response']['stats']:
+        clicks_count = response_body['response']['stats'][0]['views']
     return clicks_count
 
 
