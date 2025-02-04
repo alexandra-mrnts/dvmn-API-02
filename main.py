@@ -1,4 +1,5 @@
 import os
+import argparse
 import requests
 from dotenv import load_dotenv
 from urllib.parse import urlparse
@@ -66,18 +67,20 @@ def is_short_link(token, url):
 def main():
     load_dotenv()
     token = os.environ['VK_TOKEN']
-    user_link = input('Введите ссылку: ')
+    parser = argparse.ArgumentParser()
+    parser.add_argument('link', help = 'Короткая или длинная ссылка')
+    args = parser.parse_args()
 
-    if is_short_link(token=token, url=user_link):
+    if is_short_link(token=token, url=args.link):
         try:
             clicks_count = count_clicks(token=token,
-                                        url=user_link)
+                                        url=args.link)
             print('Количество переходов по ссылке за день:', clicks_count)
         except ValueError:
             print('Вы ввели неверную ссылку!')
     else:
         try:
-            short_link = shorten_link(token=token, url=user_link)
+            short_link = shorten_link(token=token, url=args.link)
             print('Сокращенная ссылка:', short_link)
         except ValueError:
             print('Вы ввели неверную ссылку!')
